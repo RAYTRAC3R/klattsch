@@ -226,8 +226,8 @@ export function compile(parsed, opts = {}) {
     return {
       ...p, ...glideTo,
       F0: f0Hz,
-      F1: src.F1 * scale, F2: src.F2 * scale, F3: src.F3 * scale,
-      BW1: src.BW1 * scale, BW2: src.BW2 * scale, BW3: src.BW3 * scale,
+      F1: src.F1 * scale, F2: src.F2 * scale, F3: src.F3 * scale, F4: src.F4 * scale,
+      BW1: src.BW1 * scale, BW2: src.BW2 * scale, BW3: src.BW3 * scale, BW4: src.BW4 * scale,
     };
   };
 
@@ -299,7 +299,7 @@ export function compile(parsed, opts = {}) {
       transitionMs,
     });
   };
-  const silence = (transitionMs = 30) => emit({ A1: 0, A2: 0, A3: 0 }, transitionMs);
+  const silence = (transitionMs = 30) => emit({ A1: 0, A2: 0, A3: 0, A4: 0  }, transitionMs);
 
   for (const t of tokens) {
     if (t.type === 'unknown') {

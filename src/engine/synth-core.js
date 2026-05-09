@@ -17,6 +17,7 @@ export const PARAMS = [
   'F1', 'BW1', 'A1',
   'F2', 'BW2', 'A2',
   'F3', 'BW3', 'A3',
+  'F4', 'BW4', 'A4',
   'gain',
   'vibratoDepth',   // Hz peak deviation
   'vibratoRate',    // Hz LFO rate
@@ -32,6 +33,7 @@ export const DEFAULT = {
   F1: 500, BW1: 80,  A1: 0,
   F2: 1500, BW2: 120, A2: 0,
   F3: 2500, BW3: 160, A3: 0,
+  F4: 3500, BW4: 160, A4: 0,
   gain: 3.5,
   vibratoDepth: 0,
   vibratoRate: 5,
@@ -62,6 +64,7 @@ export class FormantSynth {
     this.bp1 = new BandpassBiquad();
     this.bp2 = new BandpassBiquad();
     this.bp3 = new BandpassBiquad();
+	this.bp4 = new BandpassBiquad();
 
     this.schedule = (schedule ?? []).map(e => ({
       atSample: Math.floor((e.atMs ?? 0) * this.sr / 1000),
@@ -161,10 +164,12 @@ export class FormantSynth {
       this.bp1.setFreq(cur.F1, cur.BW1, this.sr);
       this.bp2.setFreq(cur.F2, cur.BW2, this.sr);
       this.bp3.setFreq(cur.F3, cur.BW3, this.sr);
+	  this.bp4.setFreq(cur.F4, cur.BW4, this.sr);
 
       const y = (this.bp1.process(exc) * cur.A1
               +  this.bp2.process(exc) * cur.A2
-              +  this.bp3.process(exc) * cur.A3) * cur.gain * tremoloMod;
+              +  this.bp3.process(exc) * cur.A3
+			  +  this.bp4.process(exc) * cur.A4) * cur.gain * tremoloMod;
 
       const tilted = y - cur.tilt * this.tiltPrev;
       this.tiltPrev = y;
