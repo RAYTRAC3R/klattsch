@@ -12,6 +12,7 @@
     "./engine/phonemes.js": "./src/engine/phonemes.js",
     "./engine/wav.js": "./src/engine/wav.js",
     "./formant-worklet.js": "./src/formant-worklet.js",
+    "./pronounce": "./src/engine/pronounce.js",
     "./package.json": "./package.json"
   },
   "files": [
@@ -48,5 +49,8 @@
   },
   "scripts": {
     "dev": "python3 -m http.server 8088"
+  },
+  "optionalDependencies": {
+    "cmu-pronouncing-dictionary": "^3.0.0"
   }
 }
