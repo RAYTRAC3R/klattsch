@@ -13,11 +13,13 @@
     "./engine/wav.js": "./src/engine/wav.js",
     "./formant-worklet.js": "./src/formant-worklet.js",
     "./pronounce": "./src/engine/pronounce.js",
+    "./highlight": "./src/highlight.js",
     "./package.json": "./package.json"
   },
   "files": [
     "src/engine/",
     "src/formant-worklet.js",
+    "src/highlight.js",
     "bin/",
     "README.md",
     "LICENSE"
