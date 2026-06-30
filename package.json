@@ -13,6 +13,7 @@
     "./engine/wav.js": "./src/engine/wav.js",
     "./formant-worklet.js": "./src/formant-worklet.js",
     "./pronounce": "./src/engine/pronounce.js",
+    "./kana": "./src/engine/kana.js",
     "./highlight": "./src/highlight.js",
     "./package.json": "./package.json"
   },
