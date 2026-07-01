@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Barlow+Condensed:wght@500;600;700&display=swap">
-  <link rel="stylesheet" href="src/style.css?v=0.5.0">
+  <link rel="stylesheet" href="src/style.css?v=0.6.0">
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
@@ -407,6 +407,12 @@
       <button type="button" class="changelog-close" aria-label="close">close</button>
     </div>
     <div class="changelog-body">
+      <h3>v0.6.0</h3>
+      <ul>
+        <li>english text to phonemes: CMU pronouncing dictionary lookup, exported as <code>klattsch/pronounce</code></li>
+        <li>japanese input: kana and romaji to phonemes, exported as <code>klattsch/kana</code></li>
+        <li>the editor syntax highlighter is now a public package export (<code>klattsch/highlight</code>)</li>
+      </ul>
       <h3>v0.5.0</h3>
       <ul>
         <li>complete UI overhaul: instrument-panel look, proper mobile layout, same controls</li>
@@ -470,6 +476,6 @@
     </div>
   </aside>
 
-  <script type="module" src="src/main.js?v=0.5.0"></script>
+  <script type="module" src="src/main.js?v=0.6.0"></script>
 </body>
 </html>
