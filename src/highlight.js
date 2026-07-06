@@ -23,6 +23,7 @@ const KEY_FAMILY = {
   scale: 'scale',
   vibrato: 'mod', vibratoRate: 'mod', tremolo: 'mod', tremoloRate: 'mod',
   aspiration: 'voice', tilt: 'voice', effort: 'voice',
+  voice: 'voice',
 };
 
 function dirCls(family) {

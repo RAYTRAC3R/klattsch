@@ -167,11 +167,9 @@ export function tokenize(rawInput) {
   return { tokens, source };
 }
 
-export function compile(parsed, opts = {}) {
-  // accept { tokens, source } shape from tokenize()
-  // fallback to legacy otherwise
-  const tokens = Array.isArray(parsed) ? parsed : parsed.tokens;
-  const source = Array.isArray(parsed) ? '' : (parsed.source ?? '');
+// Compile one voice section (a run of tokens with no [voice=N] marker) into a
+// standalone schedule. Each section derives its initial state from opts.
+function compileSection(tokens, opts = {}, source = '', sectionSrcStart = 0) {
   const initialBaseF0      = opts.baseF0 ?? DEFAULTS.baseF0;
   const initialRate        = opts.rate ?? DEFAULTS.rate;
   const initialScale       = opts.scale ?? 1.0;
@@ -202,7 +200,7 @@ export function compile(parsed, opts = {}) {
   let timeMs = 0;
   // phrase covers [phraseSrcStart .. token.srcEnd) of source and time
   // [phraseTimeStart .. timeMs] when the next sound finishes
-  let phraseSrcStart = 0;
+  let phraseSrcStart = sectionSrcStart;
   let phraseTimeStart = 0;
   const emitPhrase = (t) => {
     phrases.push({
@@ -437,6 +435,39 @@ export function compile(parsed, opts = {}) {
   if (phrases.length) phrases[phrases.length - 1].tEndMs = timeMs;
 
   return { schedule, totalMs: timeMs, warnings, phrases, source };
+}
+
+export function compile(parsed, opts = {}) {
+  // accept { tokens, source } shape from tokenize(), fallback to legacy array
+  const tokens = Array.isArray(parsed) ? parsed : parsed.tokens;
+  const source = Array.isArray(parsed) ? '' : (parsed.source ?? '');
+
+  // Partition tokens into voice sections at each [voice=N] marker. Sections are
+  // positional. Text before the first marker is voice 0. Each section compiles
+  // independently.
+  const sections = [[]];
+  const sectionStarts = [0];
+  for (const t of tokens) {
+    if (t.type === 'directive' && t.key === 'voice') {
+      sections.push([]);
+      sectionStarts.push(t.srcEnd ?? 0);
+      continue;
+    }
+    sections[sections.length - 1].push(t);
+  }
+
+  const voices = sections.map((toks, i) => compileSection(toks, opts, source, sectionStarts[i]));
+
+  // Backward-compatible top level: schedule/phrases are voice 0, totalMs is the
+  // max across sections, warnings are merged.
+  return {
+    schedule: voices[0].schedule,
+    totalMs: Math.max(...voices.map(v => v.totalMs)),
+    warnings: voices.flatMap(v => v.warnings),
+    phrases: voices[0].phrases,
+    source,
+    voices: voices.map(v => ({ schedule: v.schedule, totalMs: v.totalMs, phrases: v.phrases })),
+  };
 }
 
 export function compileString(input, opts) {

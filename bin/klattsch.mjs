@@ -6,7 +6,7 @@
 
 import { writeFileSync } from 'node:fs';
 import {
-  compileString, FormantSynth, encodeWav,
+  compileString, renderToBuffer, encodeWav,
 } from '../src/engine/index.js';
 
 const [, , text, outPath = 'klattsch.wav'] = process.argv;
@@ -17,14 +17,20 @@ if (!text) {
 }
 
 const sampleRate = 48000;
-const { schedule, totalMs, warnings } = compileString(text);
+const { voices, totalMs, warnings } = compileString(text);
 if (warnings.length) {
   console.error('warnings: ' + warnings.join(', '));
 }
 
-const synth = new FormantSynth({ sampleRate, schedule });
+// Render each voice section to its own buffer and sum. encodeWav peak-normalizes
+// the mix, so summing pre-clipped voices is safe.
 const buf = new Float32Array(Math.ceil(totalMs * sampleRate / 1000));
-synth.process(buf);
+for (const v of voices) {
+  if (!v.schedule.length) continue;
+  const vb = renderToBuffer({ sampleRate, schedule: v.schedule, totalMs: v.totalMs });
+  const n = Math.min(buf.length, vb.length);
+  for (let i = 0; i < n; i++) buf[i] += vb[i];
+}
 
 const { bytes, gain } = encodeWav(buf, sampleRate, {
   metadata: {

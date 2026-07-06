@@ -23,6 +23,23 @@ r200 bC#4 ( HH AH ) ( L OW )      sung syllables, one note per group
 
 See the in-app `syntax help` panel for the full directive table.
 
+### Polyphony
+
+A `[voice=N]` marker splits the phoneme string into independent voice sections.
+Everything before the first marker is voice 0; each marker begins a new section
+that compiles from a fresh initial state (running directives never carry across a
+marker). The sections are meant to sound together.
+
+```
+bC3 AA r400 AA AA [voice=1] bC4 IY r400 IY IY   a two-voice chord
+```
+
+`compileString` returns a `voices` array (`[{ schedule, totalMs, phrases }]`)
+alongside the backward-compatible top-level `schedule`/`phrases`/`totalMs`, which
+mirror voice 0. Render each voice into its own buffer (or its own worklet output)
+and mix. With no marker, `voices` has a single entry and the top-level fields are
+unchanged.
+
 ## Installation
 
 ```bash
@@ -70,6 +87,26 @@ node.connect(ctx.destination);
 const { schedule } = compileString('HH AH L OW');
 node.port.postMessage({ type: 'schedule', schedule });
 ```
+
+For polyphony, construct the node with one output per voice and address each by a
+`voice` field:
+
+```js
+const { voices } = compileString('bC3 AA [voice=1] bC4 IY');
+const node = new AudioWorkletNode(ctx, 'formant-processor', {
+  numberOfOutputs: voices.length,
+  outputChannelCount: voices.map(() => 1),
+});
+voices.forEach((v, i) => {
+  const g = ctx.createGain();
+  node.connect(g, i, 0);
+  g.connect(ctx.destination);
+  node.port.postMessage({ type: 'schedule', schedule: v.schedule, voice: i });
+});
+```
+
+A `reset` message with no `voice` field resets every voice; with one, it resets
+just that voice. Offline renders can pass `processorOptions: { schedules }`.
 
 ### Browser without a bundler (CDN)
 
