@@ -83,14 +83,16 @@ export class FormantSynth {
     }
   }
 
-  queueSchedule(events) {
+  // startCounter presets the schedule clock: negative delays the first event,
+  // positive drains already-past events on the first process() call.
+  queueSchedule(events, startCounter = 0) {
     this.schedule = events.map(e => ({
       atSample: Math.floor((e.atMs ?? 0) * this.sr / 1000),
       target: e.target,
       transitionSamples: Math.max(1, Math.floor((e.transitionMs ?? 30) * this.sr / 1000)),
     }));
     this.scheduleIdx = 0;
-    this.sampleCounter = 0;
+    this.sampleCounter = startCounter;
   }
 
   reset(initialTarget) {

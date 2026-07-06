@@ -30,7 +30,10 @@ class FormantProcessor extends AudioWorkletProcessor {
       if (msg?.type === 'frame') {
         ensure(v ?? 0).setTarget(msg.target, msg.transitionMs);
       } else if (msg?.type === 'schedule') {
-        ensure(v ?? 0).queueSchedule(msg.schedule);
+        const startCounter = msg.startTime != null
+          ? Math.round((currentTime - msg.startTime) * sampleRate)
+          : 0;
+        ensure(v ?? 0).queueSchedule(msg.schedule, startCounter);
       } else if (msg?.type === 'reset') {
         if (v == null) {
           for (const s of this.synths) s?.reset(msg.initialTarget);
