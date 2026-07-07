@@ -63,10 +63,20 @@ function classifyPart(part) {
   if (bankSwitch) return { type: 'bank_switch', name: bankSwitch[1] };
   if (part === '[bank]') return { type: 'bank_reset' };
 
+  const engineSwitch = part.match(/^\[engine=([A-Za-z0-9_.\-]+)\]$/);
+  if (engineSwitch) return { type: 'engine_switch', name: engineSwitch[1] };
+  if (part === '[engine]') return { type: 'engine_reset' };
+
   const bracket = part.match(/^\[(\w+)=(-?\d+(?:\.\d+)?)\]$/);
   if (bracket) {
     return { type: 'directive', key: bracket[1], value: Number(bracket[2]), relative: false };
   }
+
+  // Bare uppercase bracket resets an extended (engine-specific) directive to its
+  // default, e.g. `[FNZ]`. The value form `[FNZ=450]` is caught by the generic
+  // bracket above; lowercase brackets are not directives.
+  const bracketReset = part.match(/^\[([A-Z]\w*)\]$/);
+  if (bracketReset) return { type: 'directive', key: bracketReset[1], reset: true };
 
   const noteForm = part.match(/^(b)(=)?([A-G][b#]?-?\d+)$/);
   if (noteForm) {
@@ -194,6 +204,11 @@ function compileSection(tokens, opts = {}, source = '', sectionSrcStart = 0) {
   let tilt         = initialTilt;
   let effort       = initialEffort;
   // Bare `b` / `r` / `s` / `v` / `h` / `t` / `g` reset to opts values
+  let engine       = opts.engine ?? null;
+  // Extended engine-specific directives (uppercase bracket forms like [OQ=0.6]).
+  // klattsch does not interpret these; they ride into every subsequent schedule
+  // target for a consuming engine to read.
+  const extras = { ...(opts.extras ?? {}) };
   const schedule = [];
   const warnings = [];
   const phrases = [];
@@ -221,12 +236,18 @@ function compileSection(tokens, opts = {}, source = '', sectionSrcStart = 0) {
   // `glideTo` overrides the formant fields for diphthong endpoints
   const scaled = (p, f0Hz, glideTo = null) => {
     const src = glideTo ? { ...p, ...glideTo } : p;
-    return {
+    const out = {
       ...p, ...glideTo,
       F0: f0Hz,
       F1: src.F1 * scale, F2: src.F2 * scale, F3: src.F3 * scale,
       BW1: src.BW1 * scale, BW2: src.BW2 * scale, BW3: src.BW3 * scale,
     };
+    // Scale any higher formant fields a bank defines (F4/BW4 and up) so an
+    // engine reading them tracks the running formant scale like F1-3 do.
+    for (const k of Object.keys(src)) {
+      if (/^(F|BW)[4-9]$/.test(k)) out[k] = src[k] * scale;
+    }
+    return out;
   };
 
   const renderPhoneme = (t, slotMs) => {
@@ -293,7 +314,7 @@ function compileSection(tokens, opts = {}, source = '', sectionSrcStart = 0) {
   const emit = (target, transitionMs) => {
     schedule.push({
       atMs: timeMs,
-      target: { ...target, ...stateExtras() },
+      target: { ...target, ...extras, ...stateExtras() },
       transitionMs,
     });
   };
@@ -316,6 +337,15 @@ function compileSection(tokens, opts = {}, source = '', sectionSrcStart = 0) {
     }
     if (t.type === 'bank_reset') {
       phonemes = initialPhonemes;
+      continue;
+    }
+
+    if (t.type === 'engine_switch') {
+      engine = t.name;
+      continue;
+    }
+    if (t.type === 'engine_reset') {
+      engine = opts.engine ?? null;
       continue;
     }
 
@@ -396,7 +426,15 @@ function compileSection(tokens, opts = {}, source = '', sectionSrcStart = 0) {
           emitPhrase(t);
           break;
         default:
-          warnings.push(`unknown directive: ${t.key}`);
+          // Uppercase directive keys (e.g. [OQ=0.6], [FNZ=450]) are extended,
+          // engine-specific state. Accumulate them into `extras` so they ride
+          // into every subsequent target; a bare [OQ] clears the override.
+          if (/^[A-Z]/.test(t.key)) {
+            if (t.reset) delete extras[t.key];
+            else extras[t.key] = t.value;
+          } else {
+            warnings.push(`unknown directive: ${t.key}`);
+          }
       }
       continue;
     }
@@ -434,7 +472,7 @@ function compileSection(tokens, opts = {}, source = '', sectionSrcStart = 0) {
   // Hold the final phrase highlighted
   if (phrases.length) phrases[phrases.length - 1].tEndMs = timeMs;
 
-  return { schedule, totalMs: timeMs, warnings, phrases, source };
+  return { schedule, totalMs: timeMs, warnings, phrases, source, engine };
 }
 
 export function compile(parsed, opts = {}) {
@@ -465,8 +503,9 @@ export function compile(parsed, opts = {}) {
     totalMs: Math.max(...voices.map(v => v.totalMs)),
     warnings: voices.flatMap(v => v.warnings),
     phrases: voices[0].phrases,
+    engine: voices[0].engine,
     source,
-    voices: voices.map(v => ({ schedule: v.schedule, totalMs: v.totalMs, phrases: v.phrases })),
+    voices: voices.map(v => ({ schedule: v.schedule, totalMs: v.totalMs, phrases: v.phrases, engine: v.engine })),
   };
 }
 
