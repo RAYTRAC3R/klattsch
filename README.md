@@ -131,6 +131,24 @@ just that voice. Offline renders can pass `processorOptions: { schedules }`.
 - **Prosody:** the sequencer compiles phoneme strings into a time-stamped schedule of formant targets.
 - **Voice character:** vibrato (depth + rate), aspiration / breathiness, spectral tilt, and glottal effort are all controllable.
 
+### Custom engines and directives
+
+The compiler is decoupled from the synthesizer: it produces a schedule of
+parameter targets that `FormantSynth` interprets, but any consumer can interpret
+the same schedule differently. Two directives support that:
+
+- `[engine=NAME]` marks a voice section for a named engine. The compiler does not
+  interpret the name; it records it on each `voices[i].engine` (and the top-level
+  `engine`) for a consumer to dispatch on. `[engine]` resets to the default.
+  Compiling with `{ engine: 'NAME' }` sets the default for every section.
+- Uppercase bracket directives such as `[OQ=0.65]` or `[FNZ=450]` are recorded as
+  opaque, sticky state that rides into every subsequent schedule target, for an
+  engine that reads extra parameters beyond the built-in set. `[OQ]` clears the
+  override. Bank fields named `F4`/`BW4` and up are scaled by the running `s`
+  scale like `F1`-`F3`.
+
+`FormantSynth` ignores both, so existing strings and banks are unaffected.
+
 ## References
 
 - Klatt, D. H. (1980). *Software for a cascade/parallel formant synthesizer.*
