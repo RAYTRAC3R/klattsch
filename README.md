@@ -8,6 +8,13 @@ The name is a portmanteau of *Klatt* (Dennis Klatt, the formant-synth pioneer) a
 
 [**Commercial support**](#commercial-support) - integration consulting from the author
 
+## The klattsch app
+
+There is a full app built on this engine: a piano-roll editor for speech-based
+singing synthesis, with word or phoneme input, backing tracks, and WAV and video
+export. Available for Windows, macOS, Linux, and Android at
+[**klatts.ch**](https://klatts.ch/).
+
 ## What it does
 
 You type a phoneme string in [ARPABET](https://en.wikipedia.org/wiki/ARPABET), with optional directives, and the computer says it.
@@ -160,10 +167,6 @@ the same schedule differently. Two directives support that:
 ## See also
 
 - [**libadlmidi-js**](https://github.com/libadlmidi-js/libadlmidi-js) - WebAssembly build of libADLMIDI, an OPL3 FM synthesis library with AudioWorklet integration. Where klattsch does parallel-formant *vocal-tract* synthesis, libadlmidi-js does FM-operator synthesis: the sound of early-80s arcade boards and AdLib cards. Includes [oplsfxr](https://libadlmidi-js.github.io/examples/oplsfxr.html), a sfxr-style sound effect generator.
-
-## Built with klattsch
-
-- [**klattsch-sing**](https://sing.wasthatzero.net/) - a piano-roll sequencer for speech-based singing synthesis. Draw notes, type words or phonemes, render to WAV. Supports MIDI import, quantization, tempo + time signature, demo songs, and a custom KSP project file format. Built on the klattsch npm package.
 
 ## Commercial Support
 
