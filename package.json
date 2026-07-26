@@ -1,6 +1,6 @@
 {
   "name": "klattsch",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Primitive parallel-formant speech synthesis engine.",
   "type": "module",
   "main": "./src/engine/index.js",
